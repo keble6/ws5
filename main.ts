@@ -3,10 +3,6 @@
  */
 function leadingZero (num: number) {
     if (num < 10) {
-        let list: number[] = []
-        for (let value of list) {
-        	
-        }
         return "0" + num
     } else {
         return convertToText(num)
@@ -102,7 +98,7 @@ basic.forever(function () {
     if (pins.digitalReadPin(DigitalPin.P0) == 0 && DS3231.status() == 9) {
         // Limit the number of stored readings
         if (readings.length < readingsMax) {
-            readings.push("" + dateTimeString() + airPressure() + temperature())
+            readings.push("" + dateTimeString() + "," + airPressure() + "," + temperature())
             DS3231.clearAlarmFlag(alarmNum.A1)
         }
     }
