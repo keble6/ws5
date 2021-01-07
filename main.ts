@@ -1,3 +1,6 @@
+/**
+ * Set alarm time and mode
+ */
 function leadingZero (num: number) {
     if (num < 10) {
         let list: number[] = []
@@ -9,21 +12,19 @@ function leadingZero (num: number) {
         return convertToText(num)
     }
 }
+bluetooth.onBluetoothConnected(function () {
+    basic.showIcon(IconNames.Square)
+})
+bluetooth.onBluetoothDisconnected(function () {
+    basic.showIcon(IconNames.SmallSquare)
+})
 // Send readings to radio receiver
 input.onButtonPressed(Button.A, function () {
-    readingsLength = dateTimeReadings.length
+    readingsLength = readings.length
     if (readingsLength != 0) {
         for (let index = 0; index <= readingsLength - 1; index++) {
-            ack = 0
-            // Wait until we get ACK
-            while (ack == 0) {
-                basic.pause(1)
-            }
-            ack = 0
-            while (ack == 0) {
-                basic.pause(1)
-            }
-            ack = 0
+            bluetooth.uartWriteLine(readings[index])
+            basic.pause(10)
         }
     }
 })
@@ -51,11 +52,9 @@ input.onButtonPressed(Button.AB, function () {
 })
 // Delete readings array
 input.onButtonPressed(Button.B, function () {
-    readingsLength = dateTimeReadings.length
+    readingsLength = readings.length
     for (let index = 0; index < readingsLength; index++) {
-        dateTimeReadings.removeAt(0)
-        airPressureReadings.removeAt(0)
-        temperatureReadings.removeAt(0)
+        readings.removeAt(0)
     }
 })
 function temperature () {
@@ -73,21 +72,13 @@ function temperature () {
         return "No DHT11 response!"
     }
 }
-/**
- * Set alarm time and mode
- */
 let pressure = 0
 let readingsLength = 0
-let ack = 0
-let temperatureReadings: string[] = []
-let airPressureReadings: number[] = []
-let dateTimeReadings: string[] = []
+let readings: string[] = []
+bluetooth.startUartService()
 // This is the maximum number of records in the readings array
 let readingsMax = 200
-dateTimeReadings = []
-airPressureReadings = []
-temperatureReadings = []
-ack = 0
+readings = []
 DS3231.configureINTCN(interruptEnable.Enable)
 DS3231.clearAlarmFlag(alarmNum.A1)
 DS3231.clearAlarmFlag(alarmNum.A2)
@@ -110,15 +101,13 @@ basic.forever(function () {
     // Check if the alarm has triggered
     if (pins.digitalReadPin(DigitalPin.P0) == 0 && DS3231.status() == 9) {
         // Limit the number of stored readings
-        if (dateTimeReadings.length < readingsMax) {
-            dateTimeReadings.push(dateTimeString())
-            airPressureReadings.push(airPressure())
-            temperatureReadings.push(temperature())
+        if (readings.length < readingsMax) {
+            readings.push("" + dateTimeString() + airPressure() + temperature())
             DS3231.clearAlarmFlag(alarmNum.A1)
         }
     }
     // Display the number of stored readings
-    basic.showNumber(dateTimeReadings.length)
+    basic.showNumber(readings.length)
     basic.pause(100)
     basic.clearScreen()
     basic.pause(9900)
