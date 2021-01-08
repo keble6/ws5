@@ -1,6 +1,3 @@
-/**
- * Set alarm time and mode
- */
 function leadingZero (num: number) {
     if (num < 10) {
         return "0" + num
@@ -16,22 +13,34 @@ bluetooth.onBluetoothDisconnected(function () {
 })
 // Send readings to radio receiver
 input.onButtonPressed(Button.A, function () {
-    readingsLength = readings.length
+    basic.showLeds(`
+        . . # . .
+        . # # # .
+        # . # . #
+        . . # . .
+        . . # . .
+        `)
     if (readingsLength != 0) {
         for (let index = 0; index <= readingsLength - 1; index++) {
-            bluetooth.uartWriteLine(readings[index])
-            basic.pause(10)
+            bluetooth.uartWriteString(dateTimeReadings[index])
+            basic.pause(20)
+            bluetooth.uartWriteString(airPressureReadings[index])
+            basic.pause(20)
+            bluetooth.uartWriteLine(temperatureReadings[index])
+            basic.pause(20)
         }
     }
+    basic.showIcon(IconNames.Yes)
+    readingsLength = dateTimeReadings.length
 })
 function airPressure () {
     BMP280.PowerOn()
     pressure = BMP280.pressure()
     BMP280.PowerOff()
-    return pressure / 100
+    return "" + pressure / 100 + ","
 }
 function dateTimeString () {
-    return "" + leadingZero(DS3231.date()) + "/" + leadingZero(DS3231.month()) + "/" + DS3231.year() + " " + leadingZero(DS3231.hour()) + ":" + leadingZero(DS3231.minute())
+    return "" + leadingZero(DS3231.date()) + "/" + leadingZero(DS3231.month()) + "/" + DS3231.year() + " " + leadingZero(DS3231.hour()) + ":" + leadingZero(DS3231.minute()) + ","
 }
 // Press both A & B to set clock
 input.onButtonPressed(Button.AB, function () {
@@ -48,9 +57,11 @@ input.onButtonPressed(Button.AB, function () {
 })
 // Delete readings array
 input.onButtonPressed(Button.B, function () {
-    readingsLength = readings.length
+    readingsLength = dateTimeReadings.length
     for (let index = 0; index < readingsLength; index++) {
-        readings.removeAt(0)
+        dateTimeReadings.removeAt(0)
+        airPressureReadings.removeAt(0)
+        temperatureReadings.removeAt(0)
     }
 })
 function temperature () {
@@ -70,11 +81,15 @@ function temperature () {
 }
 let pressure = 0
 let readingsLength = 0
-let readings: string[] = []
+let temperatureReadings: string[] = []
+let airPressureReadings: string[] = []
+let dateTimeReadings: string[] = []
 bluetooth.startUartService()
 // This is the maximum number of records in the readings array
 let readingsMax = 200
-readings = []
+dateTimeReadings = []
+airPressureReadings = []
+temperatureReadings = []
 DS3231.configureINTCN(interruptEnable.Enable)
 DS3231.clearAlarmFlag(alarmNum.A1)
 DS3231.clearAlarmFlag(alarmNum.A2)
@@ -97,14 +112,16 @@ basic.forever(function () {
     // Check if the alarm has triggered
     if (pins.digitalReadPin(DigitalPin.P0) == 0 && DS3231.status() == 9) {
         // Limit the number of stored readings
-        if (readings.length < readingsMax) {
-            readings.push("" + dateTimeString() + "," + airPressure() + "," + temperature())
+        if ([0].length < readingsMax) {
+            dateTimeReadings.push(dateTimeString())
+            airPressureReadings.push(airPressure())
+            temperatureReadings.push(temperature())
             DS3231.clearAlarmFlag(alarmNum.A1)
         }
     }
     // Display the number of stored readings
-    basic.showNumber(readings.length)
+    basic.showNumber(dateTimeReadings.length)
     basic.pause(100)
     basic.clearScreen()
-    basic.pause(9900)
+    basic.pause(19900)
 })
