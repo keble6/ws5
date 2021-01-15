@@ -80,7 +80,8 @@ DS3231.disableAlarm(alarmNum.A1, interruptEnable.Enable)
 DS3231.disableAlarm(alarmNum.A2, interruptEnable.Disable)
 // Poll pin P0 to see if alarm is set
 basic.forever(function () {
-    if (pins.digitalReadPin(DigitalPin.P0) == 0 && DS3231.status() == 9) {
+    // Test for alarm time NB B7 of status may be 1 if oscillator stopped
+    if (pins.digitalReadPin(DigitalPin.P0) == 0 && DS3231.status() % 128 == 9) {
         if (dateTimeReadings.length <= readingsMax) {
             dateTimeReadings.push(dateTimeString())
             weatherReadings.push(getReadings())
@@ -93,5 +94,4 @@ basic.forever(function () {
     basic.pause(9900)
     serial.writeString("" + (dateTimeString()))
     serial.writeLine("" + (getReadings()))
-    BME280.PowerOff()
 })
