@@ -20,6 +20,14 @@ input.onButtonPressed(Button.A, function () {
         . . # . .
         . . # . .
         `)
+    readingsLength = dateTimeReadings.length
+    if (readingsLength != 0) {
+        for (let index = 0; index <= readingsLength - 1; index++) {
+            serial.writeString("" + (dateTimeString()))
+            serial.writeLine("" + (getReadings()))
+        }
+    }
+    basic.showIcon(IconNames.Yes)
 })
 function getReadings () {
     BME280.PowerOn()
@@ -48,11 +56,13 @@ input.onButtonPressed(Button.B, function () {
 	
 })
 let readings = ""
+let readingsLength: number = []
+let dateTimeReadings: string[] = []
 bluetooth.startUartService()
 // This is the maximum number of records in the readings array
 let readingsMax = 200
-let dateTimeReadings: number[] = []
-let weatherReadings: number[] = []
+dateTimeReadings = []
+let weatherReadings: string[] = []
 DS3231.configureINTCN(interruptEnable.Enable)
 DS3231.clearAlarmFlag(alarmNum.A1)
 DS3231.clearAlarmFlag(alarmNum.A2)
@@ -69,9 +79,12 @@ DS3231.disableAlarm(alarmNum.A2, interruptEnable.Disable)
 // Poll pin P0 to see if alarm is set
 basic.forever(function () {
     basic.showIcon(IconNames.Heart)
+    basic.showNumber(dateTimeReadings.length)
     basic.pause(100)
     basic.clearScreen()
     basic.pause(9900)
+    dateTimeReadings.push(dateTimeString())
+    weatherReadings.push(getReadings())
     serial.writeString("" + (dateTimeString()))
     serial.writeLine("" + (getReadings()))
     BME280.PowerOff()
