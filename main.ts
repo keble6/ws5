@@ -23,9 +23,9 @@ input.onButtonPressed(Button.A, function () {
     readingsLength = dateTimeReadings.length
     if (readingsLength != 0) {
         for (let index = 0; index <= readingsLength - 1; index++) {
-            bluetooth.uartWriteString(dateTimeString())
+            bluetooth.uartWriteString(dateTimeReadings[index])
             basic.pause(10)
-            bluetooth.uartWriteLine(getReadings())
+            bluetooth.uartWriteLine(weatherReadings[index])
             basic.pause(10)
         }
     }
@@ -55,16 +55,21 @@ input.onButtonPressed(Button.AB, function () {
 })
 // Delete readings array
 input.onButtonPressed(Button.B, function () {
-	
+    readingsLength = dateTimeReadings.length
+    for (let index = 0; index < readingsLength; index++) {
+        dateTimeReadings.pop()
+        weatherReadings.pop()
+    }
 })
 let readings = ""
 let readingsLength = 0
+let weatherReadings: string[] = []
 let dateTimeReadings: string[] = []
 bluetooth.startUartService()
 // This is the maximum number of records in the readings array
 let readingsMax = 200
 dateTimeReadings = []
-let weatherReadings: string[] = []
+weatherReadings = []
 DS3231.configureINTCN(interruptEnable.Enable)
 DS3231.clearAlarmFlag(alarmNum.A1)
 DS3231.clearAlarmFlag(alarmNum.A2)
