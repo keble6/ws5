@@ -1,3 +1,27 @@
+// Commands are sent to microbit with a letter followed by $
+bluetooth.onUartDataReceived(serial.delimiters(Delimiters.Dollar), function () {
+    command = bluetooth.uartReadUntil(serial.delimiters(Delimiters.Dollar))
+    serial.writeLine(command)
+    // If "u" then upload the readings to Bluetooth
+    // If "s" then set RTC time
+    // If "d" then delete the stored readings
+    if (command == "u") {
+        upload()
+    } else if (command == "s") {
+        setTime()
+    } else if (command == "d") {
+        deleteReadings()
+    } else {
+        command = ""
+    }
+})
+function deleteReadings () {
+    readingsLength = dateTimeReadings.length
+    for (let index = 0; index < readingsLength; index++) {
+        dateTimeReadings.pop()
+        weatherReadings.pop()
+    }
+}
 function leadingZero (num: number) {
     if (num < 10) {
         return "0" + num
@@ -11,8 +35,20 @@ bluetooth.onBluetoothConnected(function () {
 bluetooth.onBluetoothDisconnected(function () {
     basic.showIcon(IconNames.SmallSquare)
 })
-// Send readings to radio receiver
+// Upload readings to Bluetooth
 input.onButtonPressed(Button.A, function () {
+    upload()
+})
+function getReadings () {
+    BME280.PowerOn()
+    readings = "" + BME280.pressure(BME280_P.hPa) + "," + BME280.temperature(BME280_T.T_C) + "," + BME280.humidity()
+    BME280.PowerOff()
+    return readings
+}
+function dateTimeString () {
+    return "" + leadingZero(DS3231.date()) + "/" + leadingZero(DS3231.month()) + "/" + DS3231.year() + " " + leadingZero(DS3231.hour()) + ":" + leadingZero(DS3231.minute()) + ","
+}
+function upload () {
     basic.showLeds(`
         . . # . .
         . # # # .
@@ -28,20 +64,16 @@ input.onButtonPressed(Button.A, function () {
             bluetooth.uartWriteLine(weatherReadings[index])
             basic.pause(10)
         }
+    } else {
+        bluetooth.uartWriteString("No stored readings!")
     }
     basic.showIcon(IconNames.Yes)
-})
-function getReadings () {
-    BME280.PowerOn()
-    readings = "" + BME280.pressure(BME280_P.hPa) + "," + BME280.temperature(BME280_T.T_C) + "," + BME280.humidity()
-    BME280.PowerOff()
-    return readings
 }
-function dateTimeString () {
-    return "" + leadingZero(DS3231.date()) + "/" + leadingZero(DS3231.month()) + "/" + DS3231.year() + " " + leadingZero(DS3231.hour()) + ":" + leadingZero(DS3231.minute()) + ","
-}
-// Press both A & B to set clock
+// Press both A & B to set RTC time
 input.onButtonPressed(Button.AB, function () {
+    setTime()
+})
+function setTime () {
     DS3231.dateTime(
     2021,
     1,
@@ -52,17 +84,14 @@ input.onButtonPressed(Button.AB, function () {
     0
     )
     basic.showIcon(IconNames.Yes)
-})
-// Delete readings array
+}
+// Delete stored readings
 input.onButtonPressed(Button.B, function () {
-    readingsLength = dateTimeReadings.length
-    for (let index = 0; index < readingsLength; index++) {
-        dateTimeReadings.pop()
-        weatherReadings.pop()
-    }
+    deleteReadings()
 })
 let readings = ""
 let readingsLength = 0
+let command = ""
 let weatherReadings: string[] = []
 let dateTimeReadings: string[] = []
 bluetooth.startUartService()
