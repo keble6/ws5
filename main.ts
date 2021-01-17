@@ -1,7 +1,9 @@
 // Commands are sent to microbit with a letter followed by $
 bluetooth.onUartDataReceived(serial.delimiters(Delimiters.Dollar), function () {
     command = bluetooth.uartReadUntil(serial.delimiters(Delimiters.Dollar))
+    command = command.charAt(0)
     serial.writeLine(command)
+    serial.writeLine("" + (command.length))
     // If "u" then upload the readings to Bluetooth
     // If "s" then set RTC time
     // If "d" then delete the stored readings
@@ -115,7 +117,8 @@ DS3231.disableAlarm(alarmNum.A2, interruptEnable.Disable)
 // Poll pin P0 to see if alarm is set
 basic.forever(function () {
     // Test for alarm time NB B7 of status may be 1 if oscillator stopped
-    if (pins.digitalReadPin(DigitalPin.P0) == 0 && DS3231.status() % 128 == 9) {
+    // Test B0 of status - this is set when alarm 1 has triggered
+    if (pins.digitalReadPin(DigitalPin.P0) == 0 && DS3231.status() % 2 == 1) {
         if (dateTimeReadings.length <= readingsMax) {
             dateTimeReadings.push(dateTimeString())
             weatherReadings.push(getReadings())
