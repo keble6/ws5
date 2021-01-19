@@ -44,20 +44,20 @@ function upload () {
         . . # . .
         . . # . .
         `)
-    while (connected == 1) {
-        readingsLength = dateTimeReadings.length
-        if (readingsLength != 0) {
-            for (let index = 0; index <= readingsLength - 1; index++) {
+    readingsLength = dateTimeReadings.length
+    if (readingsLength != 0) {
+        for (let index = 0; index <= readingsLength - 1; index++) {
+            if (connected == 1) {
                 bluetooth.uartWriteString(dateTimeReadings[index])
                 basic.pause(10)
                 bluetooth.uartWriteLine(weatherReadings[index])
                 basic.pause(10)
             }
-        } else {
-            bluetooth.uartWriteString("No stored readings!")
         }
-        basic.showIcon(IconNames.Yes)
+    } else {
+        bluetooth.uartWriteString("No stored readings!")
     }
+    basic.showIcon(IconNames.Yes)
 }
 // Press both A & B to set RTC time
 input.onButtonPressed(Button.AB, function () {
