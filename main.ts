@@ -1,22 +1,3 @@
-// Commands are sent to microbit with a letter followed by $
-bluetooth.onUartDataReceived(serial.delimiters(Delimiters.Dollar), function () {
-    command = bluetooth.uartReadUntil(serial.delimiters(Delimiters.Dollar))
-    command = command.charAt(0)
-    serial.writeLine(command)
-    serial.writeLine("" + (command.length))
-    // If "u" then upload the readings to Bluetooth
-    // If "s" then set RTC time
-    // If "d" then delete the stored readings
-    if (command == "u") {
-        upload()
-    } else if (command == "s") {
-        setTime()
-    } else if (command == "d") {
-        deleteReadings()
-    } else {
-        command = ""
-    }
-})
 function deleteReadings () {
     readingsLength = dateTimeReadings.length
     for (let index = 0; index < readingsLength; index++) {
@@ -31,10 +12,14 @@ function leadingZero (num: number) {
         return convertToText(num)
     }
 }
+// Automatically upload readings
 bluetooth.onBluetoothConnected(function () {
+    connected = 1
     basic.showIcon(IconNames.Square)
+    upload()
 })
 bluetooth.onBluetoothDisconnected(function () {
+    connected = 0
     basic.showIcon(IconNames.SmallSquare)
 })
 // Upload readings to Bluetooth
@@ -43,6 +28,7 @@ input.onButtonPressed(Button.A, function () {
 })
 function getReadings () {
     BME280.PowerOn()
+    basic.pause(1000)
     readings = "" + BME280.pressure(BME280_P.hPa) + "," + BME280.temperature(BME280_T.T_C) + "," + BME280.humidity()
     BME280.PowerOff()
     return readings
@@ -58,18 +44,20 @@ function upload () {
         . . # . .
         . . # . .
         `)
-    readingsLength = dateTimeReadings.length
-    if (readingsLength != 0) {
-        for (let index = 0; index <= readingsLength - 1; index++) {
-            bluetooth.uartWriteString(dateTimeReadings[index])
-            basic.pause(10)
-            bluetooth.uartWriteLine(weatherReadings[index])
-            basic.pause(10)
+    while (connected == 1) {
+        readingsLength = dateTimeReadings.length
+        if (readingsLength != 0) {
+            for (let index = 0; index <= readingsLength - 1; index++) {
+                bluetooth.uartWriteString(dateTimeReadings[index])
+                basic.pause(10)
+                bluetooth.uartWriteLine(weatherReadings[index])
+                basic.pause(10)
+            }
+        } else {
+            bluetooth.uartWriteString("No stored readings!")
         }
-    } else {
-        bluetooth.uartWriteString("No stored readings!")
+        basic.showIcon(IconNames.Yes)
     }
-    basic.showIcon(IconNames.Yes)
 }
 // Press both A & B to set RTC time
 input.onButtonPressed(Button.AB, function () {
@@ -92,8 +80,8 @@ input.onButtonPressed(Button.B, function () {
     deleteReadings()
 })
 let readings = ""
+let connected = 0
 let readingsLength = 0
-let command = ""
 let weatherReadings: string[] = []
 let dateTimeReadings: string[] = []
 bluetooth.startUartService()

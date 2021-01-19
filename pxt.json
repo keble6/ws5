@@ -5,8 +5,6 @@
         "core": "*",
         "microphone": "*",
         "pxt-DS3231": "github:keble6/pxt-ds3231#v1.0.2",
-        "pxt-DHT11_DHT22": "github:alankrantas/pxt-dht11_dht22#v0.0.3",
-        "BMP280": "github:makecode-extensions/bmp280#v1.1.0",
         "bluetooth": "*",
         "BME280": "github:makecode-extensions/bme280#v1.1.0"
     },
