@@ -22,14 +22,15 @@ bluetooth.onBluetoothDisconnected(function () {
     connected = 0
     basic.showIcon(IconNames.SmallSquare)
 })
-// Upload readings to Bluetooth
+// Display temperature
 input.onButtonPressed(Button.A, function () {
-    upload()
+    basic.showString("" + currentTemperature + "C")
 })
 function getReadings () {
     BME280.PowerOn()
     basic.pause(1000)
     readings = "" + BME280.pressure(BME280_P.hPa) + "," + BME280.temperature(BME280_T.T_C) + "," + BME280.humidity()
+    currentTemperature = BME280.temperature(BME280_T.T_C)
     BME280.PowerOff()
     return readings
 }
@@ -80,6 +81,7 @@ input.onButtonPressed(Button.B, function () {
     deleteReadings()
 })
 let readings = ""
+let currentTemperature = 0
 let connected = 0
 let readingsLength = 0
 let weatherReadings: string[] = []
@@ -104,7 +106,6 @@ DS3231.disableAlarm(alarmNum.A1, interruptEnable.Enable)
 DS3231.disableAlarm(alarmNum.A2, interruptEnable.Disable)
 // Poll pin P0 to see if alarm is set
 basic.forever(function () {
-    // Test for alarm time NB B7 of status may be 1 if oscillator stopped
     // Test B0 of status - this is set when alarm 1 has triggered
     if (pins.digitalReadPin(DigitalPin.P0) == 0 && DS3231.status() % 2 == 1) {
         if (dateTimeReadings.length <= readingsMax) {
