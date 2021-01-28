@@ -24,6 +24,7 @@ bluetooth.onBluetoothDisconnected(function () {
 })
 // Display temperature
 input.onButtonPressed(Button.A, function () {
+    getReadings()
     basic.showString("" + currentTemperature + "C")
 })
 function getReadings () {
